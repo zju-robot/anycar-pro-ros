@@ -7,7 +7,7 @@ from anycarpro import Client
 if __name__ == '__main__':
     rospy.init_node("anycar_pro", anonymous=True)
 
-    port: str = rospy.get_param('~port')
+    port: str = rospy.get_param('~port', '/dev/serial0')
 
     client = Client(port)
     rospy.on_shutdown(client.close)
