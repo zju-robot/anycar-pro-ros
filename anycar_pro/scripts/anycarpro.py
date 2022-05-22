@@ -6,6 +6,7 @@ import nav_msgs.msg
 import rospy
 import serial
 import tf_conversions
+import tf2_ros
 
 import messages as msgs
 
@@ -23,6 +24,7 @@ class Client:
         self.__twist_listener = \
             rospy.Subscriber("cmd_vel", geometry_msgs.msg.Twist,
                              self.__twist_received)
+        self.__tf_broadcaster = tf2_ros.TransformBroadcaster()
 
     def __listen(self) -> None:
         while not self.__stop_event.wait(0.001):
@@ -63,6 +65,15 @@ class Client:
             odom.twist.twist.angular.x = odom.twist.twist.angular.y = 0.
 
             self.__odom_publisher.publish(odom)
+
+            tf = geometry_msgs.msg.TransformStamped()
+            tf.header = odom.header
+            tf.child_frame_id = odom.child_frame_id
+            tf.transform.translation.x = msg.x
+            tf.transform.translation.y = msg.y
+            tf.transform.translation.z = 0.
+            tf.transform.rotation = geometry_msgs.msg.Quaternion(*q)
+            self.__tf_broadcaster.sendTransform(tf)
 
     def __twist_received(self, twist: geometry_msgs.msg.Twist) -> None:
         self.__link.set_speed_send(twist.linear.x, twist.angular.z)
