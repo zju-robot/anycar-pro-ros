@@ -1,4 +1,4 @@
-from threading import Thread, Event
+from threading import Event, Thread
 from time import sleep
 
 import geometry_msgs.msg
@@ -7,6 +7,7 @@ import rospy
 import serial
 import tf_conversions
 import tf2_ros
+import std_srvs.srv
 
 import messages as msgs
 
@@ -24,6 +25,8 @@ class Client:
         self.__twist_listener = \
             rospy.Subscriber("cmd_vel", geometry_msgs.msg.Twist,
                              self.__twist_received)
+        self.__reset_odom_server = \
+            rospy.Service("reset_odom", std_srvs.srv.Empty, self.__reset_odom)
         self.__tf_broadcaster = tf2_ros.TransformBroadcaster()
 
     def __listen(self) -> None:
@@ -77,6 +80,10 @@ class Client:
 
     def __twist_received(self, twist: geometry_msgs.msg.Twist) -> None:
         self.__link.set_speed_send(twist.linear.x, twist.angular.z)
+
+    def __reset_odom(self, req: std_srvs.srv.EmptyRequest) -> None:
+        self.__link.set_odometry_send(0, 0, 0)
+        return std_srvs.srv.EmptyResponse()
 
     def open(self) -> None:
         self.__ser.open()
