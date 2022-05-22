@@ -25,13 +25,14 @@ class Client:
                              self.__twist_received)
 
     def __listen(self) -> None:
-        while not self.__stop_event.wait(0.01):
+        while not self.__stop_event.wait(0.001):
             try:
                 if self.__ser.readable():
-                    byte = self.__ser.read(1)
-                    msg = self.__link.parse_char(byte)
-                    if msg is not None:
-                        self.__publish(msg)
+                    data: bytes = self.__ser.read_all()
+                    msgs = self.__link.parse_buffer(data)
+                    if msgs is not None:
+                        for msg in msgs:
+                            self.__publish(msg)
             except Exception as e:
                 rospy.logwarn(e)
 
